@@ -50,27 +50,6 @@ jobs:
     - name: Create logs directory
       run: mkdir -p logs
       
-    - name: Set up environment variables
-      run: |
-        echo "Setting up environment variables..."
-        # Check if required secrets are available
-        if [ -z "${{ secrets.SENDER_MAIL }}" ]; then
-          echo "Error: SENDER_MAIL secret not set"
-          exit 1
-        fi
-        if [ -z "${{ secrets.RECEIVER_MAIL }}" ]; then
-          echo "Error: RECEIVER_MAIL secret not set"
-          exit 1
-        fi
-        if [ -z "${{ secrets.GMAIL_APP_PASS }}" ]; then
-          echo "Error: GMAIL_APP_PASS secret not set"
-          exit 1
-        fi
-        if [ -z "${{ secrets.GEMINI_API_KEY }}" ]; then
-          echo "Error: GEMINI_API_KEY secret not set"
-          exit 1
-        fi
-        
     - name: Run analysis and generate report
       env:
         SENDER_MAIL: ${{ secrets.SENDER_MAIL }}
@@ -99,8 +78,17 @@ jobs:
             receiver_email = receiver if receiver else os.getenv("RECEIVER_MAIL")
             app_password = app_password if app_password else os.getenv("GMAIL_APP_PASS")
             
-            if not all([sender_email, receiver_email, app_password]):
-                raise ValueError("Missing required email credentials")
+            # Validate required credentials
+            missing_creds = []
+            if not sender_email:
+                missing_creds.append("SENDER_MAIL")
+            if not receiver_email:
+                missing_creds.append("RECEIVER_MAIL") 
+            if not app_password:
+                missing_creds.append("GMAIL_APP_PASS")
+                
+            if missing_creds:
+                raise ValueError(f"Missing required environment variables: {', '.join(missing_creds)}")
             
             msg = EmailMessage()
             msg["Subject"] = "The Hindu Editorial Analysis Report"
