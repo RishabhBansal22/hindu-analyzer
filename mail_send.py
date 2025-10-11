@@ -26,7 +26,7 @@ def send_mail(sender=None, reciever=None, app_password=None):
     msg["Subject"] = "Monthly Report"
     msg["From"] = sender_email
     msg["To"] = receiver_email
-    msg.set_content("Hi,\n\nPlease find attached the latest PDF report.\n\nBest,\nRishabh")
+    msg.set_content("Hi,\n\nPlease find attached today's 'The Hindu Editorial' PDF analysis report.\n\nBest,\nRishabh")
 
     # === Attach the PDF file ===
     pdf_path = path # path to your PDF
@@ -39,9 +39,9 @@ def send_mail(sender=None, reciever=None, app_password=None):
         with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
             smtp.login(sender_email, app_password)
             smtp.send_message(msg)
-        print("✅ Email sent successfully!")
+        print("Email sent successfully!")
     except Exception as e:
-        print("❌ Error:", e)
+        print("Error:", e)
 
 send_mail()
     
