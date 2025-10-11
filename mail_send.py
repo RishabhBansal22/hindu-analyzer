@@ -29,7 +29,7 @@ def send_mail(sender=None, reciever=None, app_password=None):
     msg.set_content("Hi,\n\nPlease find attached today's 'The Hindu Editorial' PDF analysis report.\n\nBest,\nRishabh")
 
     # === Attach the PDF file ===
-    pdf_path = path # path to your PDF
+    pdf_path = path
     with open(pdf_path, "rb") as f:
         pdf_data = f.read()
         msg.add_attachment(pdf_data, maintype="application", subtype="pdf", filename="report.pdf")

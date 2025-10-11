@@ -30,11 +30,11 @@ class Scrapper:
         # Find editorial links - look for links with strong tags and specific patterns
         for link in self.soup.find_all('a', href=True):
             href = link['href']
-            # Check if it's an editorial article link (not the main editorial page)
+            
             if ('opinion/editorial/' in href and 
                 href != 'https://www.thehindu.com/opinion/editorial/' and
                 '/article' in href and 
-                link.find('strong')):  # Has strong tag like in your example
+                link.find('strong')):  
                 
                 # Make sure it's a full URL
                 if not href.startswith('http'):
@@ -137,7 +137,7 @@ class Scrapper:
                 
                 articles_data.append(article_data)
                 
-                # Be respectful to the server
+                
                 time.sleep(0.5)
                 
             except Exception as e:
@@ -164,12 +164,7 @@ if __name__ == "__main__":
     url = "https://www.thehindu.com/opinion/editorial/"
     scrapper = Scrapper(url)
     
-    # Get articles as JSON
+    
     result = scrapper.scrape_articles(num_articles=3)
     print(result)
-    # try:
-    #    result_dict = json.loads(result)
-    #    print(result_dict)
-    #    print(type(result_dict))
-    # except Exception as e:
-    #     print(e)
+    
