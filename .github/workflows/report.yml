@@ -1,0 +1,252 @@
+name: Automated Email Report
+
+on:
+  # Run every day at 9:00 AM IST (3:30 AM UTC)
+  schedule:
+    - cron: '30 3 * * *'
+  
+  # Allow manual trigger
+  workflow_dispatch:
+    inputs:
+      num_articles:
+        description: 'Number of articles to analyze'
+        required: false
+        default: '2'
+        type: string
+      recipient_email:
+        description: 'Override recipient email (optional)'
+        required: false
+        type: string
+
+env:
+  PYTHON_VERSION: '3.11'  # Using 3.11 since 3.14 is not available yet
+
+jobs:
+  generate-and-send-report:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        
+    - name: Cache pip dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+          
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        
+    - name: Create logs directory
+      run: mkdir -p logs
+      
+    - name: Set up environment variables
+      run: |
+        echo "Setting up environment variables..."
+        # Check if required secrets are available
+        if [ -z "${{ secrets.SENDER_MAIL }}" ]; then
+          echo "Error: SENDER_MAIL secret not set"
+          exit 1
+        fi
+        if [ -z "${{ secrets.RECEIVER_MAIL }}" ]; then
+          echo "Error: RECEIVER_MAIL secret not set"
+          exit 1
+        fi
+        if [ -z "${{ secrets.GMAIL_APP_PASS }}" ]; then
+          echo "Error: GMAIL_APP_PASS secret not set"
+          exit 1
+        fi
+        if [ -z "${{ secrets.GEMINI_API_KEY }}" ]; then
+          echo "Error: GEMINI_API_KEY secret not set"
+          exit 1
+        fi
+        
+    - name: Run analysis and generate report
+      env:
+        SENDER_MAIL: ${{ secrets.SENDER_MAIL }}
+        RECEIVER_MAIL: ${{ inputs.recipient_email || secrets.RECEIVER_MAIL }}
+        GMAIL_APP_PASS: ${{ secrets.GMAIL_APP_PASS }}
+        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      run: |
+        # Set number of articles from input or default to 2
+        NUM_ARTICLES=${{ inputs.num_articles || '2' }}
+        echo "Analyzing $NUM_ARTICLES articles..."
+        
+        # Create a modified mail_send.py that accepts command line arguments
+        cat > mail_send_workflow.py << 'EOF'
+        import sys
+        import os
+        from main import main, save_results_to_pdf, save_simple_pdf
+        import smtplib
+        from email.message import EmailMessage
+        from dotenv import load_dotenv
+        
+        # Load environment variables
+        load_dotenv()
+        
+        def send_mail(sender=None, receiver=None, app_password=None, pdf_path=None):
+            sender_email = sender if sender else os.getenv("SENDER_MAIL")
+            receiver_email = receiver if receiver else os.getenv("RECEIVER_MAIL")
+            app_password = app_password if app_password else os.getenv("GMAIL_APP_PASS")
+            
+            if not all([sender_email, receiver_email, app_password]):
+                raise ValueError("Missing required email credentials")
+            
+            msg = EmailMessage()
+            msg["Subject"] = "The Hindu Editorial Analysis Report"
+            msg["From"] = sender_email
+            msg["To"] = receiver_email
+            msg.set_content("Hi,\n\nPlease find attached today's 'The Hindu Editorial' PDF analysis report.\n\nThis report was automatically generated and sent via GitHub Actions.\n\nBest regards,\nThe Hindu Analyzer Bot")
+            
+            # Attach the PDF file
+            if pdf_path and os.path.exists(pdf_path):
+                with open(pdf_path, "rb") as f:
+                    pdf_data = f.read()
+                    msg.add_attachment(pdf_data, maintype="application", subtype="pdf", filename="hindu_editorial_analysis.pdf")
+            else:
+                raise ValueError(f"PDF file not found: {pdf_path}")
+            
+            # Send via Gmail SMTP
+            try:
+                with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
+                    smtp.login(sender_email, app_password)
+                    smtp.send_message(msg)
+                print("✅ Email sent successfully!")
+                return True
+            except Exception as e:
+                print(f"❌ Error sending email: {e}")
+                return False
+        
+        def main_workflow():
+            try:
+                # Get number of articles from command line argument
+                num_articles = int(sys.argv[1]) if len(sys.argv) > 1 else 2
+                print(f"🔍 Starting analysis of {num_articles} articles...")
+                
+                # Run the main analysis
+                result = main(num_articles)
+                
+                if not result:
+                    print("❌ Analysis failed - no results generated")
+                    return False
+                
+                print("✅ Analysis completed successfully")
+                
+                # Generate PDF report
+                print("📄 Generating PDF report...")
+                try:
+                    pdf_path = save_results_to_pdf(result)
+                except Exception as e:
+                    print(f"⚠️ Detailed PDF generation failed: {e}")
+                    print("🔄 Trying simple PDF generation...")
+                    pdf_path = save_simple_pdf(result)
+                
+                if not pdf_path:
+                    print("❌ PDF generation failed")
+                    return False
+                
+                print(f"✅ PDF generated: {pdf_path}")
+                
+                # Send email
+                print("📧 Sending email...")
+                success = send_mail(pdf_path=pdf_path)
+                
+                return success
+                
+            except Exception as e:
+                print(f"❌ Workflow failed: {e}")
+                return False
+        
+        if __name__ == "__main__":
+            success = main_workflow()
+            sys.exit(0 if success else 1)
+        EOF
+        
+        # Run the workflow
+        python mail_send_workflow.py $NUM_ARTICLES
+        
+    - name: Upload PDF artifact (on failure for debugging)
+      if: failure()
+      uses: actions/upload-artifact@v3
+      with:
+        name: generated-pdf
+        path: logs/*.pdf
+        retention-days: 7
+        
+    - name: Upload logs (on failure for debugging)
+      if: failure()
+      uses: actions/upload-artifact@v3
+      with:
+        name: workflow-logs
+        path: |
+          logs/
+          *.log
+        retention-days: 7
+        
+    - name: Notify on failure
+      if: failure()
+      env:
+        SENDER_MAIL: ${{ secrets.SENDER_MAIL }}
+        RECEIVER_MAIL: ${{ secrets.RECEIVER_MAIL }}
+        GMAIL_APP_PASS: ${{ secrets.GMAIL_APP_PASS }}
+      run: |
+        cat > failure_notification.py << 'EOF'
+        import smtplib
+        from email.message import EmailMessage
+        import os
+        from datetime import datetime
+        
+        def send_failure_notification():
+            sender_email = os.getenv("SENDER_MAIL")
+            receiver_email = os.getenv("RECEIVER_MAIL")
+            app_password = os.getenv("GMAIL_APP_PASS")
+            
+            if not all([sender_email, receiver_email, app_password]):
+                print("Missing email credentials for failure notification")
+                return
+            
+            msg = EmailMessage()
+            msg["Subject"] = "⚠️ The Hindu Editorial Analysis - Workflow Failed"
+            msg["From"] = sender_email
+            msg["To"] = receiver_email
+            
+            failure_message = f"""
+            Hi,
+            
+            The automated Hindu Editorial analysis workflow failed to complete successfully.
+            
+            Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S UTC')}
+            Workflow: ${{ github.workflow }}
+            Run ID: ${{ github.run_id }}
+            
+            Please check the GitHub Actions logs for more details:
+            https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+            
+            Best regards,
+            The Hindu Analyzer Bot
+            """
+            
+            msg.set_content(failure_message)
+            
+            try:
+                with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
+                    smtp.login(sender_email, app_password)
+                    smtp.send_message(msg)
+                print("Failure notification sent successfully")
+            except Exception as e:
+                print(f"Failed to send failure notification: {e}")
+        
+        send_failure_notification()
+        EOF
+        
+        python failure_notification.py
