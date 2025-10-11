@@ -104,12 +104,12 @@ class Gemini:
                     system_instruction=system_prompt(),
                     response_mime_type="application/json",
                     response_schema=EditorialAnalysis,
-                    temperature=0.3,  # Lower temperature for more consistent output
-                    max_output_tokens=3000,  # Increased for comprehensive analysis
+                    temperature=0.3,  
+                    max_output_tokens=3000,  
                 ),
             )
             
-            # Parse the response to ensure it's valid JSON
+            
             parsed_response = json.loads(response.text)
             
             # Try to validate with the Pydantic model, but return raw data if validation fails
@@ -129,25 +129,7 @@ class Gemini:
             print(f"Error generating content: {e}")
             return None
     
-    def get_available_models(self):
-        """List available models for reference"""
-        try:
-            models = []
-            for model in self.client.models.list():
-                # Handle different model object structures
-                if hasattr(model, 'name'):
-                    models.append(model.name)
-                elif hasattr(model, 'model'):
-                    models.append(model.model)
-                else:
-                    models.append(str(model))
-            return models
-        except Exception as e:
-            print(f"Error listing models: {e}")
-            return []
-
 if __name__ == "__main__":
-    # Example usage
     client = Gemini()
     
     # Test with a sample editorial
@@ -180,4 +162,4 @@ if __name__ == "__main__":
     else:
         print("Failed to generate analysis")
     
-    print(f"\nAvailable models: {client.get_available_models()[:5]}")  # Show first 5 models
+   
