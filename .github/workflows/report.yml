@@ -53,9 +53,10 @@ jobs:
     - name: Run analysis and generate report
       env:
         SENDER_MAIL: ${{ secrets.SENDER_MAIL }}
-        RECEIVER_MAIL: ${{ inputs.recipient_email || secrets.RECEIVER_MAIL }}
+        RECEIVER_MAIL: ${{ secrets.RECEIVER_MAIL }}
         GMAIL_APP_PASS: ${{ secrets.GMAIL_APP_PASS }}
         GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        RECIPIENT_OVERRIDE: ${{ inputs.recipient_email }}
       run: |
         # Set number of articles from input or default to 2
         NUM_ARTICLES=${{ inputs.num_articles || '2' }}
@@ -75,7 +76,9 @@ jobs:
         
         def send_mail(sender=None, receiver=None, app_password=None, pdf_path=None):
             sender_email = sender if sender else os.getenv("SENDER_MAIL")
-            receiver_email = receiver if receiver else os.getenv("RECEIVER_MAIL")
+            # Check for recipient override first, then fall back to default
+            recipient_override = os.getenv("RECIPIENT_OVERRIDE")
+            receiver_email = recipient_override if recipient_override else (receiver if receiver else os.getenv("RECEIVER_MAIL"))
             app_password = app_password if app_password else os.getenv("GMAIL_APP_PASS")
             
             # Validate required credentials
@@ -89,6 +92,8 @@ jobs:
                 
             if missing_creds:
                 raise ValueError(f"Missing required environment variables: {', '.join(missing_creds)}")
+            
+            print(f"📧 Sending email from {sender_email} to {receiver_email}")
             
             msg = EmailMessage()
             msg["Subject"] = "The Hindu Editorial Analysis Report"
