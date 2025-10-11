@@ -420,9 +420,9 @@ if __name__ == "__main__":
         format_and_display_results(results)
         
         # Try to save detailed PDF, fallback to simple PDF if needed
-        pdf_path = save_results_to_pdf(results)
-        if not pdf_path:
-            print("Detailed PDF creation failed, trying simple PDF...")
-            save_simple_pdf(results)
+        # pdf_path = save_results_to_pdf(results)
+        # if not pdf_path:
+        #     print("Detailed PDF creation failed, trying simple PDF...")
+        #     save_simple_pdf(results)
     else:
         print("Analysis failed or returned no results")
