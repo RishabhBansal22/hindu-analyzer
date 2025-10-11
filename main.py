@@ -16,6 +16,7 @@ def main(num_articles:int=1):
             
             summary_list = []
             for article in output_dict["articles"]:
+                summary_list.append(article["content"])
                 res = gemini.gemini_response(user_prompt=article["content"])
                 summary_list.append(res)
             
