@@ -3,7 +3,7 @@ name: Automated Email Report
 on:
   # Run every day at 9:00 AM IST (3:30 AM UTC)
   schedule:
-    - cron: '00 2 * * *'
+    - cron: '30 1 * * *'
   
   # Allow manual trigger
   workflow_dispatch:
