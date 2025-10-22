@@ -108,9 +108,26 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         if (emailForm) {
-            emailForm.addEventListener('submit', (e) => {
+            emailForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 const email = document.getElementById('email-input').value;
+                console.log("sending email to backend");
+                try {
+                    const response = await fetch("http://127.0.0.1:8000/download_mail/", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({ email: email})
+                    });
+                    if (!response.ok) {
+                        console.error('Server responded with', response.status);
+                    } else {
+                        console.log('Email submitted successfully');
+                    }
+                } catch (err) {
+                    console.error('Failed to send email', err);
+                }
                 console.log(`Email submitted: ${email}. Preparing to download ${requestedPdfPath}`);
                 
                 // Simulate sending email and then trigger download
