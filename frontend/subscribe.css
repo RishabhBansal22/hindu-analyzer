@@ -1,0 +1,130 @@
+.subscribe-section {
+    padding: 80px 0;
+    background-color: var(--bg-color);
+}
+
+.subscribe-card {
+    max-width: 600px;
+    margin: 0 auto;
+    background: #fff;
+    padding: 50px;
+    border-radius: 15px;
+    box-shadow: 0 15px 40px rgba(0,0,0,0.1);
+    text-align: center;
+}
+
+.subscribe-card h2 {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    color: var(--primary-color);
+}
+
+.subscribe-card > p {
+    margin-bottom: 40px;
+    color: var(--text-color);
+}
+
+.plan-details {
+    background: var(--bg-color);
+    padding: 30px;
+    border-radius: 10px;
+    margin-bottom: 40px;
+    text-align: left;
+    border: 1px solid #e0e0e0;
+}
+
+.plan-details h3 {
+    font-size: 1.5rem;
+    margin-bottom: 10px;
+}
+
+.plan-details .price {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--primary-color);
+    margin-bottom: 20px;
+}
+
+.plan-details .price span {
+    font-size: 1rem;
+    font-weight: 400;
+    color: #777;
+}
+
+.plan-details ul {
+    list-style: '✔';
+    padding-left: 20px;
+    margin-bottom: 0;
+}
+
+.plan-details ul li {
+    margin-bottom: 10px;
+    padding-left: 10px;
+}
+
+#subscription-form {
+    text-align: left;
+}
+
+.form-group {
+    margin-bottom: 25px;
+}
+
+.form-group label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: var(--primary-color);
+}
+
+.form-group input {
+    width: 100%;
+    padding: 12px 15px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 1rem;
+    box-sizing: border-box;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: var(--secondary-color);
+    box-shadow: 0 0 8px rgba(74, 144, 226, 0.5);
+}
+
+.payment-field {
+    border: 1px solid #ccc;
+    padding: 12px 15px;
+    border-radius: 5px;
+    background: #f9f9f9;
+}
+
+.payment-placeholder {
+    color: #888;
+    font-style: italic;
+    margin: 0;
+}
+
+#subscription-form .cta-button {
+    width: 100%;
+    padding: 15px;
+    font-size: 1.2rem;
+    margin-top: 10px;
+}
+
+.form-row {
+    display: flex;
+    gap: 20px;
+}
+
+.form-row .form-group {
+    flex: 1;
+}
+
+@media (max-width: 600px) {
+    .form-row {
+        flex-direction: column;
+        gap: 0;
+    }
+}
