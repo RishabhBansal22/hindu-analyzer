@@ -114,7 +114,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.log(`Email submitted: ${email}. Preparing to download ${requestedPdfPath}`);
                 
                 // Simulate sending email and then trigger download
-                alert(`Thank you! The download for ${requestedPdfPath.split('/').pop()} will begin shortly.`);
+                alert(`Thank you! The download will begin shortly.`);
 
                 // Create a temporary link to trigger the download
                 const link = document.createElement('a');
